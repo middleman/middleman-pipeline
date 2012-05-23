@@ -1,7 +1,7 @@
 # Do not include "input" or "output" directives
 
 match "one_and_two/*.js" do
-  filter Rake::Pipeline::ConcatFilter, "assets/one_and_two.js"
+  filter Rake::Pipeline::ConcatFilter, "one_and_two.js"
 end
 
 # filter Rake::Pipeline::ConcatFilter

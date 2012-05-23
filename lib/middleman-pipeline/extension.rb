@@ -38,9 +38,9 @@ module Middleman::Pipeline
                 input "#{full_input_path}"
                 output "#{full_output_path}"
                 
-                #{pipeline_source}
+                filter ::Middleman::Pipeline::SitemapFilter, instance, input_path
                 
-                filter ::Middleman::Pipeline::SitemapFilter, instance
+                #{pipeline_source}
               end
 END
           rescue
@@ -61,7 +61,8 @@ END
             false
           )
           
-          # use ::Rake::Pipeline::Middleware, pipeline
+          map("/#{input_path}")  { run ::Rake::Pipeline::Middleware.new(self, pipeline) }
+          
         end
       end
     end
@@ -100,19 +101,14 @@ END
     def manipulate_resource_list(resources)
       @pipeline.invoke_clean
       
-      # resources.each do |r|
-      #   if r.path =~ %r{^#{@input_path}}
-      #     r.pipeline_ignored = true
-      #   end
-      # end
+      resources.each do |r|
+        if r.path =~ %r{^#{@input_path}}
+          r.pipeline_ignored = true
+        end
+      end
       
       resources + @pipeline.output_files.map do |file|
-        path = if file.path =~ %r{^#{@input_path}}
-          file.path
-        else
-          File.join(@input_path, file.path)
-        end
-        
+        path = File.join(@input_path, file.path)
         ::Middleman::Sitemap::Resource.new(
           @app.sitemap,
           path,
@@ -123,25 +119,47 @@ END
   end
   
   class SitemapFilter < ::Rake::Pipeline::Filter
-    def initialize(app, &block)
+    def initialize(app, input_path)
       @app = app
+      @input_path = input_path
+      
+      @resource_for_path = {}
+      
+      block = proc do |input|
+        resource = resource_for_path(input)
+        
+        if resource.template?
+          extensionless = @app.sitemap.extensionless_path(input)
+          @resource_for_path[extensionless] = resource
+          extensionless
+        else
+          input
+        end
+      end
       
       super(&block)
-      
-      @output_name_generator = proc do |input|
-        @app.sitemap.extensionless_path(input)
-      end
     end
     
+    def resource_for_path(path)
+      @resource_for_path[path] ||= begin
+        full_path = File.join(@input_path, path)
+        
+        ::Middleman::Sitemap::Resource.new(
+          @app.sitemap,
+          @app.sitemap.file_to_path(full_path),
+          File.expand_path(full_path, @app.source_dir)
+        )
+      end
+    end
+        
     def generate_output(inputs, output)
       inputs.each do |input|
-        # resource = @app.sitemap.find_resource_by_path(input.path)
+        resource = resource_for_path(input.path)
         
-        out = if true || resource.nil?
-          # input.read
-          ""
-        else
+        out = if resource.template?
           resource.render
+        else
+          input.read
         end
         
         output.write out
