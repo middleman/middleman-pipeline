@@ -16,7 +16,9 @@ module Middleman::Pipeline
         asset_file = options[:Assetfile] || File.expand_path("Assetfile", root)
         input_path = options[:input] || "assets"
         
-        instance = self
+        # Pass along details to filter
+        ::Middleman::Pipeline::Filter.instance = self
+        ::Middleman::Pipeline::Filter.input_path = input_path
         
         if asset_file.is_a?(String)
           begin
@@ -37,8 +39,6 @@ module Middleman::Pipeline
               build do
                 input "#{full_input_path}"
                 output "#{full_output_path}"
-                
-                filter ::Middleman::Pipeline::SitemapFilter, instance, input_path
                 
                 #{pipeline_source}
               end
@@ -118,10 +118,15 @@ END
     end
   end
   
-  class SitemapFilter < ::Rake::Pipeline::Filter
-    def initialize(app, input_path)
-      @app = app
-      @input_path = input_path
+  class Filter < ::Rake::Pipeline::Filter
+    class << self
+      attr_accessor :instance
+      attr_accessor :input_path
+    end
+    
+    def initialize
+      @app = self.class.instance
+      @input_path = self.class.input_path
       
       @resource_for_path = {}
       

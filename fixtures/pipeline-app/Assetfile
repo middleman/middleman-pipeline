@@ -1,7 +1,8 @@
 # Do not include "input" or "output" directives
 
+# Run Middleman on files first
+filter ::Middleman::Pipeline::Filter
+
 match "one_and_two/*.js" do
   filter Rake::Pipeline::ConcatFilter, "one_and_two.js"
 end
-
-# filter Rake::Pipeline::ConcatFilter
