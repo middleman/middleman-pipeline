@@ -1,5 +1,6 @@
 require "rake-pipeline"
 require "rake-pipeline/middleware"
+require "rake-pipeline-web-filters"
 
 # Rake::Pipeline extension
 module Middleman::Pipeline

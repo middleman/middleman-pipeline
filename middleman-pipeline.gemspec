@@ -21,4 +21,5 @@ Gem::Specification.new do |s|
   
   s.add_dependency("middleman-more", Middleman::Pipeline::VERSION)
   s.add_dependency("rake-pipeline")
+  s.add_dependency("rake-pipeline-web-filters")
 end
