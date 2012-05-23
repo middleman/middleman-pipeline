@@ -11,8 +11,12 @@ module Middleman::Pipeline
     # Once registered
     def registered(app, options={})
       app.after_configuration do
+        ::Middleman::Sitemap::Resource.send :include, ResourceInstanceMethods
+        
         asset_file = options[:Assetfile] || File.expand_path("Assetfile", root)
         input_path = options[:input] || "assets"
+        
+        instance = self
         
         if asset_file.is_a?(String)
           begin
@@ -33,7 +37,10 @@ module Middleman::Pipeline
               build do
                 input "#{full_input_path}"
                 output "#{full_output_path}"
+                
                 #{pipeline_source}
+                
+                filter ::Middleman::Pipeline::SitemapFilter, instance
               end
 END
           rescue
@@ -50,11 +57,11 @@ END
         if pipeline
           sitemap.register_resource_list_manipulator(
             :pipeline,
-            PipelineManager.new(self, pipeline),
+            PipelineManager.new(self, pipeline, input_path),
             false
           )
           
-          use ::Rake::Pipeline::Middleware, pipeline
+          # use ::Rake::Pipeline::Middleware, pipeline
         end
       end
     end
@@ -62,23 +69,82 @@ END
     alias :included :registered
   end
   
+  module ResourceInstanceMethods
+    
+    def pipeline_ignored?
+      @_pipeline_ignored || false
+    end
+    
+    def pipeline_ignored=(v)
+      @_pipeline_ignored = v
+    end
+    
+    def ignored?
+      if pipeline_ignored?
+        true
+      else
+        super
+      end
+    end
+  end
+  
   class PipelineManager
-    def initialize(app, pipeline)
+    def initialize(app, pipeline, input_path)
       @app = app
       @pipeline = pipeline
+      @input_path = input_path
     end
     
     # Update the main sitemap resource list
     # @return [void]
     def manipulate_resource_list(resources)
       @pipeline.invoke_clean
-
+      
+      # resources.each do |r|
+      #   if r.path =~ %r{^#{@input_path}}
+      #     r.pipeline_ignored = true
+      #   end
+      # end
+      
       resources + @pipeline.output_files.map do |file|
+        path = if file.path =~ %r{^#{@input_path}}
+          file.path
+        else
+          File.join(@input_path, file.path)
+        end
+        
         ::Middleman::Sitemap::Resource.new(
           @app.sitemap,
-          file.path,
-          File.expand_path(file.path, @app.root)
+          path,
+          File.expand_path(path, @app.source_dir)
         )
+      end
+    end
+  end
+  
+  class SitemapFilter < ::Rake::Pipeline::Filter
+    def initialize(app, &block)
+      @app = app
+      
+      super(&block)
+      
+      @output_name_generator = proc do |input|
+        @app.sitemap.extensionless_path(input)
+      end
+    end
+    
+    def generate_output(inputs, output)
+      inputs.each do |input|
+        # resource = @app.sitemap.find_resource_by_path(input.path)
+        
+        out = if true || resource.nil?
+          # input.read
+          ""
+        else
+          resource.render
+        end
+        
+        output.write out
       end
     end
   end
