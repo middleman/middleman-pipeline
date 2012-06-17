@@ -4,3 +4,4 @@ tmp
 .rbenv-*
 .sass-cache
 .pipeline-tmp
+pkg
