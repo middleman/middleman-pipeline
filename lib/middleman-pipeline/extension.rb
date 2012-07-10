@@ -1,3 +1,9 @@
+vendor1_dir = File.expand_path(File.join(File.dirname(__FILE__), "vendor", "rake-pipeline", "lib"))
+$LOAD_PATH.unshift(vendor1_dir) unless $LOAD_PATH.include?(vendor1_dir)
+
+vendor2_dir = File.expand_path(File.join(File.dirname(__FILE__), "vendor", "rake-pipeline-web-filters", "lib"))
+$LOAD_PATH.unshift(vendor2_dir) unless $LOAD_PATH.include?(vendor2_dir)
+
 require "rake-pipeline"
 require "rake-pipeline/middleware"
 require "rake-pipeline-web-filters"
