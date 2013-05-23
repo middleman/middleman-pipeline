@@ -18,7 +18,8 @@ Gem::Specification.new do |s|
   s.test_files    = `git ls-files -- {test,spec,features}/*`.split("\n")
   s.require_paths = ["lib"]
   
-  s.add_dependency("middleman-more", "~> 3.0.0")
-  # s.add_dependency("rake-pipeline")
-  # s.add_dependency("rake-pipeline-web-filters")
+  s.add_dependency("middleman-core", "~> 3.1")
+  s.add_dependency("middleman-more", "~> 3.1")
+  s.add_dependency("rake-pipeline")
+  s.add_dependency("rake-pipeline-web-filters")
 end

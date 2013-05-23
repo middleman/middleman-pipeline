@@ -1,6 +1,0 @@
-[submodule "lib/middleman-pipeline/vendor/rake-pipeline"]
-	path = lib/middleman-pipeline/vendor/rake-pipeline
-	url = git://github.com/livingsocial/rake-pipeline.git
-[submodule "lib/middleman-pipeline/vendor/rake-pipeline-web-filters"]
-	path = lib/middleman-pipeline/vendor/rake-pipeline-web-filters
-	url = git://github.com/wycats/rake-pipeline-web-filters.git

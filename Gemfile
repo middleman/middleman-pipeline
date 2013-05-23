@@ -1,23 +1,25 @@
-source :rubygems
+source "https://rubygems.org"
 
-git "git://github.com/middleman/middleman.git" do
-  # gem "middleman"
-  gem "middleman-core"
-  gem "middleman-more"
-end
+gem "middleman-core", :github => "middleman/middleman"
+gem "middleman-more", :github => "middleman/middleman"
 
-# Specify your gem's dependencies in middleman-blog.gemspec
+# Specify your gem's dependencies in middleman-syntax.gemspec
 gemspec
 
-group :development do
-  gem "rake",     "~> 0.9.2"
-  gem "rdoc",     "~> 3.9"
-  gem "yard",     "~> 0.8.0"
+# gem "rake",     "~> 10.0.3", :require => false
+gem "yard",     "~> 0.8.0", :require => false
+
+# Test tools
+gem "cucumber", "~> 1.3.1"
+gem "fivemat"
+gem "aruba",    "~> 0.5.1"
+gem "rspec",    "~> 2.12"
+
+platforms :ruby do
+  gem "redcarpet"
 end
 
-group :test do
-  gem "cucumber", "~> 1.2.0"
-  gem "fivemat"
-  gem "aruba",    "~> 0.4.11"
-  gem "rspec",    "~> 2.7"
-end
+gem "kramdown"
+
+# Code Quality
+gem "cane", :platforms => [:mri_19, :mri_20], :require => false
