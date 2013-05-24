@@ -1,181 +1,175 @@
-vendor1_dir = File.expand_path(File.join(File.dirname(__FILE__), "vendor", "rake-pipeline", "lib"))
-$LOAD_PATH.unshift(vendor1_dir) unless $LOAD_PATH.include?(vendor1_dir)
-
-vendor2_dir = File.expand_path(File.join(File.dirname(__FILE__), "vendor", "rake-pipeline-web-filters", "lib"))
-$LOAD_PATH.unshift(vendor2_dir) unless $LOAD_PATH.include?(vendor2_dir)
-
 require "rake-pipeline"
 require "rake-pipeline/middleware"
 require "rake-pipeline-web-filters"
 
-# Rake::Pipeline extension
-module Middleman::Pipeline
+module Middleman
+  module Pipeline
 
-  # Setup extension
-  class << self
+    class Pipeline < Extension
+      option :Assetfile, 'Assetfile', 'Filename to read Rack-Pipeline config from'
+      option :input, 'assets', 'Source input folder'
 
-    # Once registered
-    def registered(app, options={})
-      app.after_configuration do
-        ::Middleman::Sitemap::Resource.send :include, ResourceInstanceMethods
-        
-        asset_file = options[:Assetfile] || File.expand_path("Assetfile", root)
-        input_path = options[:input] || "assets"
-        
-        # Pass along details to filter
-        ::Middleman::Pipeline::Filter.instance = self
-        ::Middleman::Pipeline::Filter.input_path = input_path
-        
-        if asset_file.is_a?(String)
-          begin
-            pipeline_source = File.read(asset_file)
-            
-            if pipeline_source =~ /^input/
-              puts "== Warning: Do not include 'input' directive in Assetfile"
-            end
-            
-            if pipeline_source =~ /^output/
-              puts "== Warning: Do not include 'output' directive in Assetfile"
-            end
-
-            full_input_path  = File.expand_path(input_path, source_dir)
-            full_output_path = File.expand_path(".pipeline-tmp", root)
-
-            final_asset_source = <<END
-              build do
-                input "#{full_input_path}"
-                output "#{full_output_path}"
-                
-                #{pipeline_source}
-              end
-END
-          rescue
-            puts "== Error: Could not read Assetfile (#{asset_file})"
-          end
-          
-          if final_asset_source
-            pipeline = ::Rake::Pipeline.class_eval final_asset_source, asset_file, 1
-          end
-        else
-          pipeline = asset_file
-        end
-        
-        if pipeline
-          sitemap.register_resource_list_manipulator(
-            :pipeline,
-            PipelineManager.new(self, pipeline, input_path),
-            false
-          )
-          
-          map("/#{input_path}")  { run ::Rake::Pipeline::Middleware.new(self, pipeline) }
-          
-        end
-      end
-    end
-    
-    alias :included :registered
-  end
-  
-  module ResourceInstanceMethods
-    
-    def pipeline_ignored?
-      @_pipeline_ignored || false
-    end
-    
-    def pipeline_ignored=(v)
-      @_pipeline_ignored = v
-    end
-    
-    def ignored?
-      if pipeline_ignored?
-        true
-      else
+      def initialize(app, options_hash={}, &block)
         super
-      end
-    end
-  end
-  
-  class PipelineManager
-    def initialize(app, pipeline, input_path)
-      @app = app
-      @pipeline = pipeline
-      @input_path = input_path
-    end
-    
-    # Update the main sitemap resource list
-    # @return [void]
-    def manipulate_resource_list(resources)
-      @pipeline.invoke_clean
-      
-      resources.each do |r|
-        if r.path =~ %r{^#{@input_path}}
-          r.pipeline_ignored = true
-        end
-      end
-      
-      resources + @pipeline.output_files.map do |file|
-        path = File.join(@input_path, file.path)
-        ::Middleman::Sitemap::Resource.new(
-          @app.sitemap,
-          path,
-          File.expand_path(path, @app.source_dir)
-        )
-      end
-    end
-  end
-  
-  class Filter < ::Rake::Pipeline::Filter
-    class << self
-      attr_accessor :instance
-      attr_accessor :input_path
-    end
-    
-    def initialize
-      @app = self.class.instance
-      @input_path = self.class.input_path
-      
-      @resource_for_path = {}
-      
-      block = proc do |input|
-        resource = resource_for_path(input)
-        
-        if resource.template?
-          extensionless = @app.sitemap.extensionless_path(input)
-          @resource_for_path[extensionless] = resource
-          extensionless
-        else
-          input
-        end
-      end
-      
-      super(&block)
-    end
-    
-    def resource_for_path(path)
-      @resource_for_path[path] ||= begin
-        full_path = File.join(@input_path, path)
-        
-        ::Middleman::Sitemap::Resource.new(
-          @app.sitemap,
-          @app.sitemap.file_to_path(full_path),
-          File.expand_path(full_path, @app.source_dir)
-        )
-      end
-    end
-        
-    def generate_output(inputs, output)
-      inputs.each do |input|
-        resource = resource_for_path(input.path)
-        
-        out = if resource.template?
-          resource.render
-        else
-          input.read
-        end
-        
-        output.write out
-      end
-    end
-  end
 
+        ::Middleman::Sitemap::Resource.send :include, ResourceInstanceMethods
+      end
+
+      def after_configuration
+        asset_file = File.expand_path(options[:Assetfile], app.root)
+      
+        ::Middleman::Pipeline::Filter.instance = app
+        ::Middleman::Pipeline::Filter.input_path = options[:input]
+
+        begin
+          pipeline_source = File.read(asset_file)
+        rescue
+          puts "== Error: Could not read Assetfile (#{asset_file})"
+          pipeline_source = ""
+        end
+        
+        if pipeline_source =~ /^input/
+          puts "== Warning: Do not include 'input' directive in Assetfile"
+        end
+        
+        if pipeline_source =~ /^output/
+          puts "== Warning: Do not include 'output' directive in Assetfile"
+        end
+
+        full_input_path  = File.expand_path(options[:input], app.source_dir)
+        full_output_path = File.expand_path(".pipeline-tmp", app.root)
+
+        final_asset_source = <<END
+          build(:tmpdir => ".pipeline-tmp") do
+            input "#{full_input_path}"
+            output "#{full_output_path}"
+                          
+            # Run Middleman on files first
+            filter ::Middleman::Pipeline::Filter
+
+            #{pipeline_source}
+          end
+END
+
+        @pipeline = ::Rake::Pipeline.class_eval final_asset_source, asset_file, 1
+      end
+
+      # Update the main sitemap resource list
+      # @return [void]
+      def manipulate_resource_list(resources)
+        @pipeline.invoke_clean
+        
+        resources.each do |r|
+          if r.path =~ %r{^#{options[:input]}}
+            r.pipeline_ignored = true
+          end
+        end
+        
+        resources + @pipeline.output_files.map do |file|
+          PipelineResource.new(@app, self, file)
+        end
+      end
+    end
+
+    class PipelineResource < ::Middleman::Sitemap::Resource
+      def initialize(app, ext, file)
+        @app = app
+        @ext = ext
+        @file = file
+
+        super(
+          @app.sitemap,
+          File.join(@ext.options[:input], @file.path),
+          @file.fullpath
+        )
+      end
+
+      def render
+        @file.read
+      end
+
+      def ignored?
+        false
+      end
+
+      def binary?
+        false
+      end
+
+      def raw_data
+        {}
+      end
+
+      def metadata
+        @local_metadata
+      end
+    end
+    
+    module ResourceInstanceMethods
+      def pipeline_ignored?
+        @_pipeline_ignored || false
+      end
+      
+      def pipeline_ignored=(v)
+        @_pipeline_ignored = v
+      end
+      
+      def ignored?
+        if pipeline_ignored?
+          true
+        else
+          super
+        end
+      end
+    end
+    
+    class Filter < ::Rake::Pipeline::Filter
+      class << self
+        attr_accessor :instance
+        attr_accessor :input_path
+      end
+      
+      def initialize
+        @app = self.class.instance
+        @input_path = self.class.input_path
+        
+        block = proc do |input|
+          resource = resource_for_path(input)
+          
+          if resource.template?
+            @app.sitemap.extensionless_path(input)
+          else
+            input
+          end
+        end
+        
+        super(&block)
+      end
+      
+      def resource_for_path(path)
+        full_path = File.join(@input_path, path)
+        fuller_path = File.join(@app.source, @input_path, path)
+        
+        ::Middleman::Sitemap::Resource.new(
+          @app.sitemap,
+          @app.sitemap.file_to_path(fuller_path),
+          File.expand_path(fuller_path, @app.root)
+        )
+      end
+          
+      def generate_output(inputs, output)
+        inputs.each do |input|
+          resource = resource_for_path(input.path)
+
+          out = if resource.template?
+            resource.render
+          else
+            input.read
+          end
+
+          output.write out
+        end
+      end
+    end
+  end
 end

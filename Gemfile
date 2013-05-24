@@ -1,7 +1,6 @@
 source "https://rubygems.org"
 
 gem "middleman-core", :github => "middleman/middleman"
-gem "middleman-more", :github => "middleman/middleman"
 
 # Specify your gem's dependencies in middleman-syntax.gemspec
 gemspec
@@ -19,7 +18,18 @@ platforms :ruby do
   gem "redcarpet"
 end
 
-gem "kramdown"
+gem "sass"
+gem "compass"
+gem "coffee-script", "~> 2.2.0"
+gem "execjs", "~> 1.4.0"
+
+platforms :ruby do
+  gem "therubyracer"
+end
+
+platforms :jruby do
+  gem "therubyrhino"
+end
 
 # Code Quality
 gem "cane", :platforms => [:mri_19, :mri_20], :require => false
