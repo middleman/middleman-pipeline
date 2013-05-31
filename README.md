@@ -1,49 +1,59 @@
-# middleman-pipeline
+# Middleman-Pipeline
 
-# Install
+`middleman-pipeline` is an extension for the [Middleman] static site generator that adds [Rake::Pipeline](https://github.com/livingsocial/rake-pipeline) support
+
+## Installation
+
+If you're just getting started, install the `middleman` gem and generate a new project:
 
 ```
-gem install middleman-pipeline
+gem install middleman
+middleman init MY_PROJECT
 ```
 
-If you already have a Middleman project:
-Add `middleman-pipeline` to your `Gemfile`, and open your `config.rb` and add:
+If you already have a Middleman project: Add `gem "middleman-pipeline"` to your `Gemfile` and run `bundle install`.
+
+## Configuration
 
 ```
 activate :pipeline
 ```
 
-# Community
+## Build & Dependency Status
 
-The official community forum is available at:
+[![Gem Version](https://badge.fury.io/rb/middleman-pipeline.png)][gem]
+[![Build Status](https://travis-ci.org/middleman/middleman-pipeline.png)][travis]
+[![Dependency Status](https://gemnasium.com/middleman/middleman-pipeline.png?travis)][gemnasium]
+[![Code Quality](https://codeclimate.com/github/middleman/middleman-pipeline.png)][codeclimate]
 
-  http://forum.middlemanapp.com/
+## Community
 
-# Bug Reports
+The official community forum is available at: http://forum.middlemanapp.com
 
-GitHub Issues are used for managing bug reports and feature requests. If you run into issues, please search the issues and submit new problems:
+## Bug Reports
 
-https://github.com/middleman/middleman-pipeline/issues
+Github Issues are used for managing bug reports and feature requests. If you run into issues, please search the issues and submit new problems: https://github.com/middleman/middleman-pipeline/issues
 
-The best way to get quick responses to your issues and swift fixes to your bugs is to submit detailed bug reports, include test cases and respond to developer questions in a timely manner. Even better, if you know Ruby, you can submit Pull Requests containing Cucumber Features which describe how your feature should work or exploit the bug you are submitting.
+The best way to get quick responses to your issues and swift fixes to your bugs is to submit detailed bug reports, include test cases and respond to developer questions in a timely manner. Even better, if you know Ruby, you can submit [Pull Requests](https://help.github.com/articles/using-pull-requests) containing Cucumber Features which describe how your feature should work or exploit the bug you are submitting.
 
-# Build & Dependency Status
-
-[![Build Status](http://travis-ci.org/middleman/middleman-pipeline.png)](http://travis-ci.org/middleman/middleman-pipeline)
-
-# How to Run Cucumber Tests
+## How to Run Cucumber Tests
 
 1. Checkout Repository: `git clone https://github.com/middleman/middleman-pipeline.git`
 2. Install Bundler: `gem install bundler`
 3. Run `bundle install` inside the project root to install the gem dependencies.
 4. Run test cases: `bundle exec rake test`
 
-# Donate
+## Donate
 
-[![Click here to lend your support to Middleman](https://www.pledgie.com/campaigns/15807.png)](http://www.pledgie.com/campaigns/15807)
+[Click here to lend your support to Middleman](https://spacebox.io/s/4dXbHBorC3)
 
-# License
+## License
 
-Copyright (c) 2012 Thomas Reynolds. MIT Licensed, see [LICENSE] for details.
+Copyright (c) 2012-2013 Thomas Reynolds. MIT Licensed, see [LICENSE] for details.
 
-[LICENSE]: https://github.com/middleman/middleman-pipeline/blob/master/LICENSE
+[middleman]: http://middlemanapp.com
+[gem]: https://rubygems.org/gems/middleman-pipeline
+[travis]: http://travis-ci.org/middleman/middleman-pipeline
+[gemnasium]: https://gemnasium.com/middleman/middleman-pipeline
+[codeclimate]: https://codeclimate.com/github/middleman/middleman-pipeline
+[LICENSE]: https://github.com/middleman/middleman-pipeline/blob/master/LICENSE.md
